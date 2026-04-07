@@ -1,27 +1,62 @@
-
-
-\documentclass[12pt,twocolumn]{article}
+\documentclass{beamer}
 
 \usepackage[russian]{babel}
 \usepackage[utf8]{inputenc}
-
 \usepackage{cmap}
 \usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{hyperref}
 \usepackage{xspace}
-\usepackage{float}
-\usepackage[left=1cm,right=1cm,top=1cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage{psfrag}
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
 
-\newcommand {\titlefont} {\Large \bf \sffamily}
-\newcommand {\authorfont} {\large \sffamily}
-\newcommand {\publisherfont} {\normalsize \sffamily}
-\newcommand {\abstractfont} {\normalsize \it}
+\beamertemplatenavigationsymbolsempty
+\setbeamertemplate{footline}[frame number]
+\usecolortheme{seahorse}
+
+%%Исправляем греческие буквы в формулах, они должны быть прямыми, а не курсивными
+\DeclareSymbolFont{greek}{U}{eur}{m}{n}                                                        
+\SetSymbolFont{greek}{bold}{U}{eur}{b}{n}                                                      
+\DeclareSymbolFontAlphabet{\gr}{greek}                                                         
+\DeclareMathSymbol{\alpha}{\mathord}{greek}{"0B}                                               
+\DeclareMathSymbol{\beta}{\mathord}{greek}{"0C}                                                
+\DeclareMathSymbol{\gamma}{\mathord}{greek}{"0D}                                               
+\DeclareMathSymbol{\delta}{\mathord}{greek}{"0E}                                               
+\DeclareMathSymbol{\epsilon}{\mathord}{greek}{"0F}                                             
+\DeclareMathSymbol{\zeta}{\mathord}{greek}{"10}                                                
+\DeclareMathSymbol{\eta}{\mathord}{greek}{"11}                                                 
+\DeclareMathSymbol{\theta}{\mathord}{greek}{"12}                                               
+\DeclareMathSymbol{\iota}{\mathord}{greek}{"13}                                                
+\DeclareMathSymbol{\kappa}{\mathord}{greek}{"14}                                               
+\DeclareMathSymbol{\lambda}{\mathord}{greek}{"15}                                              
+\DeclareMathSymbol{\mu}{\mathord}{greek}{"16}                                                  
+\DeclareMathSymbol{\nu}{\mathord}{greek}{"17}                                                  
+\DeclareMathSymbol{\xi}{\mathord}{greek}{"18}                                                  
+\DeclareMathSymbol{\pi}{\mathord}{greek}{"19}                                                  
+\DeclareMathSymbol{\rho}{\mathord}{greek}{"1A}                                                 
+\DeclareMathSymbol{\sigma}{\mathord}{greek}{"1B}                                               
+\DeclareMathSymbol{\tau}{\mathord}{greek}{"1C}                                                 
+             \DeclareMathSymbol{\upsilon}{\mathord}{greek}{"1D}                                             
+\DeclareMathSymbol{\phi}{\mathord}{greek}{"1E}                                                 
+\DeclareMathSymbol{\chi}{\mathord}{greek}{"1F}                                                 
+\DeclareMathSymbol{\psi}{\mathord}{greek}{"20}                                                 
+\DeclareMathSymbol{\omega}{\mathord}{greek}{"21}                                               
+\DeclareMathSymbol{\varepsilon}{\mathord}{greek}{"22}                                          
+\DeclareMathSymbol{\vartheta}{\mathord}{greek}{"23}                                            
+\DeclareMathSymbol{\varpi}{\mathord}{greek}{"24}                                               
+\let\varrho\rho                                                                                
+\let\varsigma\sigma                                                                            
+\DeclareMathSymbol{\varphi}{\mathord}{greek}{"27}
+
+\title{Казуистические основы формалировки заголовков презентаций в~академических традициях Сибири}
+\author{Томский~А.~Б.}
+\date{\today}
 
 \begin{document}
-\sloppy
-\large
+\maketitle
 
-Тест
+\begin{frame}
+\frametitle{ТГУ}
+\framesubtitle{Томский государственный университет}
+\end{frame}
+
 \end{document}
