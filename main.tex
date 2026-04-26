@@ -59,7 +59,7 @@
 \maketitle
 
 % Slide 2
-\begin{frame}
+\begin{frame}[shrink=10]
 \frametitle{Цели и задачи}
 \textbf{Цель работы:} разработать и развернуть воспроизводимую среду выполнения ARM64 Linux-системы на x86\_64-хосте с использованием архитектурного симулятора gem5, обеспечивающую интерактивную работу и возможность дальнейших экспериментов.
 
@@ -80,7 +80,7 @@
 \end{frame}
 
 % Slide 3
-\begin{frame}
+\begin{frame}[shrink=5]
 \frametitle{Функциональные требования}
 \begin{enumerate}
     \item Запуск ARM64 Linux Kernel в режиме full-system симуляции
@@ -96,7 +96,7 @@
 \end{frame}
 
 % Slide 4
-\begin{frame}
+\begin{frame}[shrink=10]
 \frametitle{Нефункциональные требования}
 \begin{enumerate}
     \item Повторный запуск симуляции должен приводить к одинаковым результатам при одинаковой конфигурации
@@ -284,6 +284,98 @@ Debian GNU/Linux
 uname -m
 aarch64
 \end{lstlisting}
+\end{frame}
+
+% Slide 13
+\begin{frame}
+\frametitle{Подготовка Debian ARM64 rootfs-образа}
+\begin{enumerate}
+    \item Создан файл-образ ext4 для будущего Debian rootfs
+    \item Образ смонтирован на x86\_64-хосте как loop-устройство
+    \item Rootfs заполнен через debootstrap: deb.debian.org/debian, ветка stable
+    \item После debootstrap появились стандартные каталоги Linux: bin/, etc/, usr/, /var и другие
+    \item Образ отмонтирован; итоговый артефакт: debian-arm64.ext4
+    \item Debian-образ подключён к gem5 как второй виртуальный диск
+\end{enumerate}
+\end{frame}
+
+% Slide 14
+\begin{frame}
+\frametitle{Расширение конфигурации gem5 для второго диска}
+Стандартная конфигурация gem5 starter\_fs.py предназначена для запуска ARM64 full-system симуляции с одним дисковым образом.
+В рамках работы возникла необходимость подключить второй независимый образ файловой системы Debian ARM64. Для этого была подготовлена модифицированная конфигурация starter\_fs\_2disks.py.
+
+\medskip
+Основные изменения:
+\begin{itemize}
+    \item Добавлен параметр \texttt{--disk-image2};
+    \item Создан второй VirtIO block device;
+    \item Оба диска подключаются к PCI-шине симулируемой системы;
+    \item Основной диск используется для загрузки Ubuntu, второй --- для Debian chroot;
+\end{itemize}
+\end{frame}
+
+% Slide 15
+\begin{frame}[fragile]
+\frametitle{Запуск симуляции с двумя дисками}
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily,frame=none,breaklines=true,breakatwhitespace=false]
+./build/ARM/gem5.opt \
+    configs/example/arm/starter_fs_2disks.py \
+    --kernel "$M5_PATH/binaries/vmlinux.arm64" \
+    --disk-image "$M5_PATH/disks/ubuntu-18.04-arm64-docker.img" \
+    --disk-image2 "$M5_PATH/disks/debian-arm64.ext4" \
+    --cpu atomic \
+    --num-cores 1 \
+    --mem-size 2GB
+\end{lstlisting}
+\end{frame}
+
+% Slide 16
+\begin{frame}[fragile]
+\frametitle{Подключение к системе и проверка дисков}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+rlwrap -cAr nc 127.0.0.1 3456
+
+lsblk:
+vda1 - основной Ubuntu root (/)
+vdb  - второй диск 2GB
+
+ls /mnt/debian | head -n 20
+bin boot dev etc home ...
+\end{lstlisting}
+\medskip
+После запуска был обнаружен второй VirtIO-диск /dev/vdb.
+Содержимое /mnt/debian подтвердило корректную структуру Debian rootfs.
+Это позволило подготовить chroot-окружение внутри ARM64-гостя.
+\end{frame}
+
+% Slide 17
+\begin{frame}[fragile]
+\frametitle{Запуск chroot внутри ARM64-гостя}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+mount --bind /dev /mnt/debian/dev
+mount --bind /dev/pts /mnt/debian/dev/pts
+mount -t proc proc /mnt/debian/proc
+mount -t sysfs sys /mnt/debian/sys
+mount -t tmpfs tmpfs /mnt/debian/run
+
+cp -L /etc/resolv.conf /mnt/debian/etc/resolv.conf
+chroot /mnt/debian /bin/bash
+\end{lstlisting}
+\end{frame}
+
+% Slide 18
+\begin{frame}[shrink=5]
+\frametitle{Выводы}
+\begin{itemize}
+    \item Full-system симуляция ARM64 Linux в gem5 была успешно расширена подключением второго виртуального диска.
+    \item Основной Ubuntu rootfs используется для загрузки гостевой ARM64-системы.
+    \item Дополнительный Debian ARM64 rootfs подключается как отдельный VirtIO-диск.
+    \item Для этого стандартный starter\_fs.py был модифицирован в starter\_fs\_2disks.py.
+    \item В модифицированном скрипте добавлены параметр \texttt{--disk-image2} и логика подключения второго VirtIO block device.
+    \item Внутри гостевой системы второй диск был обнаружен, смонтирован и использован для запуска Debian chroot-окружения.
+    \item Успешная проверка \texttt{cat /etc/os-release}, \texttt{uname -m} и \texttt{whoami} подтвердила работу Debian userland на архитектуре aarch64.
+\end{itemize}
 \end{frame}
 
 \end{document}
