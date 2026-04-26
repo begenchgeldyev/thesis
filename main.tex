@@ -8,6 +8,8 @@
 \usepackage{psfrag}
 \usepackage{hyperref}
 \usepackage[normalem]{ulem}
+\usepackage{listings}
+\usepackage{colortbl}
 
 \beamertemplatenavigationsymbolsempty
 \setbeamertemplate{footline}[frame number]
@@ -47,24 +49,241 @@
 \let\varsigma\sigma                                                                            
 \DeclareMathSymbol{\varphi}{\mathord}{greek}{"27}
 
-\title{Казуистические основы формалировки заголовков презентаций в~академических традициях Сибири}
-\author{Томский~А.~Б.}
-\date{\today}
+\title{Развёртывание и исследование ARM64 Linux-системы на x86\_64-платформе с использованием симулятора gem5 для решения задач кросскомпиляции}
+\author{Студент: Гельдыев~Б.~932204 \\ Науч.рук.: Пожидаев~Михаил~Сергеевич}
+\date{}
 
 \begin{document}
 \maketitle
 
+% Slide 2
 \begin{frame}
-\frametitle{ТГУ}
-\framesubtitle{Томский государственный университет}
+\frametitle{Цели и задачи}
+\textbf{Цель работы:} разработать и развернуть воспроизводимую среду выполнения ARM64
+Linux-системы на x86\_64-хосте с использованием архитектурного симулятора gem5,
+обеспечивающую интерактивную работу и возможность дальнейших экспериментов.
+
+\medskip
+\textbf{Задачи работы:}
+\begin{enumerate}
+    \item Проанализировать существующие подходы к запуску ARM-систем на x86\_64
+    \item Изучить архитектуру и возможности симулятора gem5
+    \item Подготовить окружение для full-system симуляции ARM64
+    \item Загрузить ARM64 Linux kernel и root filesystem (Ubuntu)
+    \item Обеспечить интерактивный доступ к системе через консоль
+    \item Проверить корректность загрузки и работы пользовательского пространства
+    \item Подготовить основу для автоматизации и контейнеризации решения
+\end{enumerate}
 \end{frame}
 
+% Slide 3
 \begin{frame}
-\frametitle{UML}
-\framesubtitle{Пример диаграммы UML}
-\begin{figure}[h]
-\includegraphics[width=9cm,height=5cm,keepaspectratio]{demo-uml.pdf}
-\end{figure}
+\frametitle{Функциональные требования}
+\begin{enumerate}
+    \item Запуск ARM64 Linux Kernel в режиме full-system симуляции
+    \item Поддержку загрузки с виртуального диска
+    \item Корректное монтирование корневой файловой системы
+    \item Поддержка стандартных Linux-интерфейсов:
+    \begin{itemize}
+        \item Файловая система
+        \item Процессы
+        \item Консольный ввод/вывод
+    \end{itemize}
+    \item Возможность интерактивной работы пользователя (shell)
+    \item Поддержку автоматического выполнения сценариев при загрузке
+    \item Возможность изменения конфигурации симулируемой системы:
+    \begin{itemize}
+        \item Тип CPU
+        \item Объём памяти
+        \item Количество ядер
+    \end{itemize}
+\end{enumerate}
+\end{frame}
+
+% Slide 4
+\begin{frame}
+\frametitle{Нефункциональные требования}
+\begin{enumerate}
+    \item Повторный запуск должен приводить к одинаковым результатам при одинаковой конфигурации
+    \item Возможность запуска на стандартной системе x86\_64 Linux-системе без специализированного оборудования
+    \item Возможность дальнейшего добавления:
+    \begin{itemize}
+        \item Архитектурных экспериментов
+        \item Новых образов ОС
+        \item Других моделей CPU
+    \end{itemize}
+    \item Возможность получения отладочной информации и логов работы системы
+    \item Поддержка и запуск без ручного вмешательства (контейнеры)
+\end{enumerate}
+\end{frame}
+
+% Slide 5
+\begin{frame}
+\frametitle{Обзор существующих подходов}
+\begin{table}
+\small
+\begin{tabular}{|p{2.5cm}|p{2cm}|p{1.8cm}|p{2.5cm}|}
+\hline
+\rowcolor{blue!20} Критерий & KVM / VirtualBox & QEMU & gem5 \\
+\hline
+Запуск ARM на x86\_64 & Нет & Да & Да \\
+\hline
+Тип технологии & Виртуализация & Эмуляция & Архитектурная симуляция \\
+\hline
+Режим full-system & Нет & Да & Да \\
+\hline
+Точность моделирования CPU & Низкая & Средняя & Высокая \\
+\hline
+Моделирование микроархитектуры & Нет & Ограничено & Да \\
+\hline
+Поддержка архитектурных экспериментов & Нет & Ограничено & Да \\
+\hline
+\end{tabular}
+\end{table}
+\end{frame}
+
+% Slide 6
+\begin{frame}
+\frametitle{Обоснование выбора симулятора gem5}
+\begin{enumerate}
+    \item gem5 позволяет запускать ARM64 Linux-системы на x86\_64-хосте в режиме full-system симуляции
+    \item В отличие от QEMU, gem5 моделирует внутреннюю архитектуру процессора, включая:
+    \begin{itemize}
+        \item Конвейер
+        \item Кэш-память
+        \item Подсистему памяти
+        \item Взаимодействие с устройствами
+    \end{itemize}
+    \item Возможность изменять параметры моделируемой системы:
+    \begin{itemize}
+        \item Тип процессорной модели
+        \item Количество ядер
+        \item Объём и тип памяти
+    \end{itemize}
+\end{enumerate}
+\medskip
+\textbf{Ограничение:} низкая производительность по сравнению с эмуляцией и виртуализацией
+\end{frame}
+
+% Slide 7
+\begin{frame}
+\frametitle{Общая архитектура}
+Разрабатываемое решение представляет собой многоуровневую систему, в которой ARM64-платформа полностью моделируется поверх x86\_64-хоста.
+\begin{enumerate}
+    \item \textbf{Хост система:} архитектура x86\_64, ОС Linux; запуск эмулятора, управление конфигурацией, подключение к консоли гостевой системы
+    \item \textbf{Архитектурный симулятор gem5:} полная симуляция аппаратной платформы: ARM64 CPU, ОЗУ, устройства ввода-вывода, виртуальные шины
+    \item \textbf{Симулируемая ARM64-система:} процессор ARMv8-A, ядро vmlinux, корневая ФС Ubuntu (ext4), виртуальный диск (virtio), консоль PL011 UART
+    \item \textbf{Пользовательский интерфейс:} подключение через ttyAMA0, TCP-порты, проброшенные gem5, поддержка интерактивной shell-сессии
+\end{enumerate}
+\end{frame}
+
+% Slide 8
+\begin{frame}[fragile]
+\frametitle{Подготовка окружения}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+$M5_PATH/
+|-- binaries/
+|   |-- boot.arm
+|   |-- boot.arm64
+|   `-- vmlinux.arm64
+`-- disks/
+    `-- ubuntu-18.04-arm64-docker.img
+\end{lstlisting}
+\medskip
+\textbf{Переменная окружения:}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+EXPORT M5_PATH=$HOME/m5/system
+\end{lstlisting}
+\end{frame}
+
+% Slide 9
+\begin{frame}[fragile]
+\frametitle{Запуск симуляции ARM64 Linux}
+\begin{columns}
+\begin{column}{0.57\textwidth}
+\begin{lstlisting}[basicstyle=\tiny\ttfamily,frame=single]
+./build/ARM/gem5.opt \
+  configs/example/arm/starter_fs.py \
+  --kernel \
+  "$M5_PATH/binaries/vmlinux.arm64" \
+  --disk-image \
+  "$M5_PATH/disks/ubuntu-18.04-arm64-docker.img" \
+  --cpu atomic \
+  --num-cores 1 \
+  --mem-size 2GB
+\end{lstlisting}
+\end{column}
+\begin{column}{0.43\textwidth}
+Параметры запуска:
+
+\medskip
+\texttt{--cpu atomic} --- быстрый старт и отладка
+
+\medskip
+\texttt{--num-cores 1} --- однопроцессорная конфигурация
+
+\medskip
+\texttt{--mem-size 2GB} --- ограничение объёма памяти
+
+\medskip
+\texttt{starter\_fs.py} --- режим full-system
+\end{column}
+\end{columns}
+\end{frame}
+
+% Slide 10
+\begin{frame}[fragile]
+\frametitle{Подключение и результат работы}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+rlwrap -cAr nc 127.0.0.1 3456
+\end{lstlisting}
+\begin{lstlisting}[basicstyle=\tiny\ttfamily,
+  backgroundcolor=\color{black},
+  basicstyle=\tiny\ttfamily\color{white},
+  frame=single,framesep=4pt]
+Ubuntu 18.04.2 LTS aarch64-gem5 ttyAMA0
+
+aarch64-gem5 login: root (automatic login)
+
+Welcome to Ubuntu 18.04.2 LTS (GNU/Linux 4.18.0+ aarch64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+root@aarch64-gem5:~#
+\end{lstlisting}
+\end{frame}
+
+% Slide 11
+\begin{frame}[shrink=5]
+\frametitle{Процесс загрузки ARM64 Linux в gem5}
+\begin{enumerate}
+    \item \textbf{Запуск симулятора gem5} --- инициализация симулируемой аппаратной платформы. Создание виртуального ARM64-окружения (CPU, память, устройства)
+    \item \textbf{Загрузка bootloader} --- используются boot.arm и boot.arm64. Подготовка процессора к передаче управления ядру Linux
+    \item \textbf{Запуск ядра Linux} --- ARM64 ядро (vmlinux.arm64) загружается в память. Передача параметров командной строки ядра. Инициализация драйверов и подсистем ядра
+    \item \textbf{Инициализация устройств} --- последовательная консоль (PL011, ttyAMA0), виртуальный диск (virtio-blk), таймеры, прерывания, память
+    \item \textbf{Монтирование корневой файловой системы} --- обнаружение /dev/vda1, монтирование rootfs (ext4), переход в пользовательское пространство
+    \item \textbf{Запуск userland} --- выполнение init-скриптов, запуск getty на ttyAMA0, автоматический вход пользователя root
+\end{enumerate}
+\end{frame}
+
+% Slide 12
+\begin{frame}
+\frametitle{Выводы}
+\begin{enumerate}
+    \item Развёрнута полноценная ARM64 Linux-система на x86\_64-хосте
+    \item Использован режим full-system симуляции
+    \item Обеспечена интерактивная работа через консоль
+    \item Подтверждена корректная загрузка ядра и rootfs Ubuntu
+\end{enumerate}
+\medskip
+\textbf{Направления дальнейшего развития}
+\begin{enumerate}
+    \item Использование более детальных моделей CPU (O3)
+    \item Проведение архитектурных экспериментов с кэш-памятью
+    \item Интеграция с Docker для автоматизации запусков
+\end{enumerate}
 \end{frame}
 
 \end{document}
