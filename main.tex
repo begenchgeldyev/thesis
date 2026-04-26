@@ -335,14 +335,15 @@ aarch64
 \frametitle{Подключение к системе и проверка дисков}
 \begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
 rlwrap -cAr nc 127.0.0.1 3456
-
-lsblk:
-vda1 - основной Ubuntu root (/)
-vdb  - второй диск 2GB
-
-ls /mnt/debian | head -n 20
-bin boot dev etc home ...
 \end{lstlisting}
+{\small\ttfamily\obeylines\obeyspaces%
+lsblk:\\
+vda1 - основной Ubuntu root (/)\\
+vdb\ \ - второй диск 2GB\\
+~\\
+ls /mnt/debian | head -n 20\\
+bin boot dev etc home \ldots%
+}
 \medskip
 После запуска был обнаружен второй VirtIO-диск /dev/vdb.
 Содержимое /mnt/debian подтвердило корректную структуру Debian rootfs.
