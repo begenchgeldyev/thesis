@@ -1,0 +1,39 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam padding 10
+skinparam ArrowColor #444444
+skinparam ArrowFontSize 11
+
+title Диаграмма компонентов: ARM64 Linux симуляция на x86_64 через gem5
+
+[Пользователь\n(rlwrap + netcat)] as USER
+
+node "x86_64 Хост" as HOST #LightCyan {
+    [gem5 Симулятор\n(starter_fs_2disks.py)] as GEM5
+    [Дисковые образы\n(Ubuntu .img + Debian .ext4)] as DISKS
+    [ARM64 ядро\n(vmlinux.arm64)] as KFILE
+}
+
+node "Симулируемая ARM64 система" as ARM #LightGreen {
+    [ARM64 CPU + Память\n+ VirtIO диски] as HW
+    [Linux Kernel\n(aarch64)] as KERNEL
+    [Ubuntu rootfs\n(/dev/vda)] as UBUNTU
+    [Debian rootfs\n(/dev/vdb → /mnt/debian)] as DEBIAN
+    [chroot окружение\n(Debian /bin/bash)] as CHROOT
+}
+
+' Связи
+USER    --> GEM5   : запускает симуляцию
+GEM5    --> KFILE  : загружает ядро
+GEM5    --> DISKS  : подключает образы
+GEM5    --> HW     : создаёт платформу
+HW      --> KERNEL : загружает ядро
+KERNEL  --> UBUNTU : монтирует /
+KERNEL  --> DEBIAN : монтирует /mnt/debian
+UBUNTU  --> CHROOT : chroot /mnt/debian /bin/bash
+KERNEL  --> USER   : консоль TCP :3456
+
+@enduml
