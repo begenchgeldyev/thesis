@@ -9,6 +9,7 @@
 \usepackage{hyperref}
 \usepackage[normalem]{ulem}
 \usepackage{listings}
+\usepackage{fancyvrb}
 \usepackage{colortbl}
 \usepackage{tabularx}
 \usepackage{booktabs}
@@ -83,43 +84,6 @@
 \end{enumerate}
 \end{frame}
 
-% Slide 3
-\begin{frame}[shrink=5]
-\frametitle{Требования к~гостевой системе}
-\begin{enumerate}
-    \item Запуск ARM64 Linux Kernel в режиме full-system симуляции.
-    \item Запуск основной ARM64-системы с Ubuntu rootfs.
-    \item Подключение второго виртуального диска с Debian ARM64 rootfs.
-    \item Обнаружение и монтирование второго диска внутри гостевой системы.
-    \item Подготовка системных точек монтирования для chroot: \texttt{/dev,/proc,/sys,/run}.
-    \item Запуск Debian chroot-окружения внутри ARM64 Linux.
-    \item Проверка архитектуры и пользовательского пространства внутри chroot.
-    \item Интерактивная работа через последовательную консоль.
-    \item Возможность изменения параметров симуляции: CPU, память, ядра, диски.
-\end{enumerate}
-\end{frame}
-
-% Slide 4
-\begin{frame}[shrink=10]
-\frametitle{Нефункциональные требования}
-\begin{enumerate}
-    \item Повторный запуск симуляции должен приводить к одинаковым результатам при одинаковой конфигурации.
-    \item Реализация должна запускаться на стандартной x86\_64 Linux-системе без специализированного ARM-оборудования.
-    \item Подготовка Debian ARM64 rootfs должна быть воспроизводимой на x86\_64-хосте.
-    \item Файл-образ Debian rootfs должен быть переносимым и подключаемым к gem5 как отдельный виртуальный диск.
-    \item Конфигурация симуляции должна позволять дальнейшее добавление:
-    \begin{itemize}
-        \item новых образов ОС;
-        \item дополнительных виртуальных дисков;
-        \item других моделей CPU;
-        \item архитектурных экспериментов.
-    \end{itemize}
-    \item Решение должно обеспечивать возможность получения отладочной информации и логов работы системы.
-    \item Запуск должен поддерживать дальнейшую автоматизацию без ручного вмешательства.
-    \item Структура решения должна быть пригодна для последующей контейнеризации.
-\end{enumerate}
-\end{frame}
-
 % Slide 5
 \begin{frame}
 \frametitle{Обзор существующих подходов}
@@ -145,6 +109,37 @@
 \end{frame}
 
 % Slide 6
+\begin{frame}[shrink=10]
+\frametitle{Требования к ARM64 full-system симуляции в gem5}
+
+\textbf{Функциональные требования}
+\begin{itemize}
+    \item Запуск ARM64 Linux Kernel в full-system режиме
+    \item Ubuntu rootfs как основная ARM64-система
+    \item Debian ARM64 rootfs как второй виртуальный диск
+    \item Обнаружение и монтирование второго диска
+    \item Запуск Debian через chroot
+    \item Подготовка /dev, /proc, /sys, /run
+    \item Проверка архитектуры внутри chroot
+    \item Работа через serial console
+    \item Настройка CPU, RAM, ядер и дисков
+\end{itemize}
+
+\textbf{Нефункциональные требования}
+\begin{itemize}
+    \item Воспроизводимый запуск при одинаковой конфигурации
+    \item Работа на x86\_64 без ARM-оборудования
+    \item Воспроизводимая подготовка Debian rootfs
+    \item Переносимый образ Debian rootfs
+    \item Возможность добавления новых ОС, дисков и CPU-моделей
+    \item Поддержка логов, отладки и автоматизации
+    \item Структура, пригодная для контейнеризации
+\end{itemize}
+
+Почему gem5: моделирует не только запуск ОС, но и архитектуру процессора: CPU pipeline, cache, memory subsystem и устройства.
+\end{frame}
+
+% Slide 7
 \begin{frame}
 \frametitle{Обоснование выбора симулятора gem5}
 \begin{enumerate}
@@ -179,23 +174,10 @@
 \end{enumerate}
 \end{frame}
 
-% Slide 8
-\begin{frame}[fragile]
-\frametitle{Подготовка окружения}
-\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
-$M5_PATH/
-|-- binaries/
-|   |-- boot.arm
-|   |-- boot.arm64
-|   `-- vmlinux.arm64
-`-- disks/
-    `-- ubuntu-18.04-arm64-docker.img
-\end{lstlisting}
-\medskip
-\textbf{Переменная окружения:}
-\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
-EXPORT M5_PATH=$HOME/m5/system
-\end{lstlisting}
+\begin{frame}
+\frametitle{Диаграмма компонентов}
+\centering
+\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{component-diagram.png}
 \end{frame}
 
 % Slide 9
@@ -319,22 +301,75 @@ aarch64
 \end{itemize}
 \end{frame}
 
-% Slide 15
+% Slide 16
+% Slide 17
+% Slide 18
+\begin{frame}[shrink=5]
+\frametitle{Выводы}
+\begin{itemize}
+    \item Full-system симуляция ARM64 Linux в gem5 была успешно расширена подключением второго виртуального диска.
+    \item Основной Ubuntu rootfs используется для загрузки гостевой ARM64-системы.
+    \item Дополнительный Debian ARM64 rootfs подключается как отдельный VirtIO-диск.
+    \item Для этого стандартный starter\_fs.py был модифицирован в starter\_fs\_2disks.py.
+    \item В модифицированном скрипте добавлены параметр \texttt{--disk-image2} и логика подключения второго VirtIO block device.
+    \item Внутри гостевой системы второй диск был обнаружен, смонтирован и использован для запуска Debian chroot-окружения.
+    \item Успешная проверка \texttt{cat /etc/os-release}, \texttt{uname -m} и \texttt{whoami} подтвердила работу Debian userland на архитектуре aarch64.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[shrink=5]
+\frametitle{Требования к~гостевой системе}
+\begin{enumerate}
+    \item Запуск ARM64 Linux Kernel в режиме full-system симуляции.
+    \item Запуск основной ARM64-системы с Ubuntu rootfs.
+    \item Подключение второго виртуального диска с Debian ARM64 rootfs.
+    \item Обнаружение и монтирование второго диска внутри гостевой системы.
+    \item Подготовка системных точек монтирования для chroot: \texttt{/dev,/proc,/sys,/run}.
+    \item Запуск Debian chroot-окружения внутри ARM64 Linux.
+    \item Проверка архитектуры и пользовательского пространства внутри chroot.
+    \item Интерактивная работа через последовательную консоль.
+    \item Возможность изменения параметров симуляции: CPU, память, ядра, диски.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[shrink=10]
+\frametitle{Нефункциональные требования}
+\begin{enumerate}
+    \item Повторный запуск симуляции должен приводить к одинаковым результатам при одинаковой конфигурации.
+    \item Реализация должна запускаться на стандартной x86\_64 Linux-системе без специализированного ARM-оборудования.
+    \item Подготовка Debian ARM64 rootfs должна быть воспроизводимой на x86\_64-хосте.
+    \item Файл-образ Debian rootfs должен быть переносимым и подключаемым к gem5 как отдельный виртуальный диск.
+    \item Конфигурация симуляции должна позволять дальнейшее добавление:
+    \begin{itemize}
+        \item новых образов ОС;
+        \item дополнительных виртуальных дисков;
+        \item других моделей CPU;
+        \item архитектурных экспериментов.
+    \end{itemize}
+    \item Решение должно обеспечивать возможность получения отладочной информации и логов работы системы.
+    \item Запуск должен поддерживать дальнейшую автоматизацию без ручного вмешательства.
+    \item Структура решения должна быть пригодна для последующей контейнеризации.
+\end{enumerate}
+\end{frame}
+
 \begin{frame}[fragile]
-\frametitle{Запуск симуляции с двумя дисками}
-\begin{lstlisting}[basicstyle=\scriptsize\ttfamily,frame=none,breaklines=true,breakatwhitespace=false]
-./build/ARM/gem5.opt \
-    configs/example/arm/starter_fs_2disks.py \
-    --kernel "$M5_PATH/binaries/vmlinux.arm64" \
-    --disk-image "$M5_PATH/disks/ubuntu-18.04-arm64-docker.img" \
-    --disk-image2 "$M5_PATH/disks/debian-arm64.ext4" \
-    --cpu atomic \
-    --num-cores 1 \
-    --mem-size 2GB
+\frametitle{Подготовка окружения}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+$M5_PATH/
+|-- binaries/
+|   |-- boot.arm
+|   |-- boot.arm64
+|   `-- vmlinux.arm64
+`-- disks/
+    `-- ubuntu-18.04-arm64-docker.img
+\end{lstlisting}
+\medskip
+\textbf{Переменная окружения:}
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
+EXPORT M5_PATH=$HOME/m5/system
 \end{lstlisting}
 \end{frame}
 
-% Slide 16
 \begin{frame}[fragile]
 \frametitle{Подключение к системе и проверка дисков}
 \begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
@@ -354,7 +389,6 @@ bin boot dev etc home \ldots%
 Это позволило подготовить chroot-окружение внутри ARM64-гостя.
 \end{frame}
 
-% Slide 17
 \begin{frame}[fragile]
 \frametitle{Запуск chroot внутри ARM64-гостя}
 \begin{lstlisting}[basicstyle=\small\ttfamily,frame=none]
@@ -369,18 +403,18 @@ chroot /mnt/debian /bin/bash
 \end{lstlisting}
 \end{frame}
 
-% Slide 18
-\begin{frame}[shrink=5]
-\frametitle{Выводы}
-\begin{itemize}
-    \item Full-system симуляция ARM64 Linux в gem5 была успешно расширена подключением второго виртуального диска.
-    \item Основной Ubuntu rootfs используется для загрузки гостевой ARM64-системы.
-    \item Дополнительный Debian ARM64 rootfs подключается как отдельный VirtIO-диск.
-    \item Для этого стандартный starter\_fs.py был модифицирован в starter\_fs\_2disks.py.
-    \item В модифицированном скрипте добавлены параметр \texttt{--disk-image2} и логика подключения второго VirtIO block device.
-    \item Внутри гостевой системы второй диск был обнаружен, смонтирован и использован для запуска Debian chroot-окружения.
-    \item Успешная проверка \texttt{cat /etc/os-release}, \texttt{uname -m} и \texttt{whoami} подтвердила работу Debian userland на архитектуре aarch64.
-\end{itemize}
+\begin{frame}[fragile]
+\frametitle{Запуск симуляции с двумя дисками}
+\begin{lstlisting}[basicstyle=\scriptsize\ttfamily,frame=none,breaklines=true,breakatwhitespace=false]
+./build/ARM/gem5.opt \
+    configs/example/arm/starter_fs_2disks.py \
+    --kernel "$M5_PATH/binaries/vmlinux.arm64" \
+    --disk-image "$M5_PATH/disks/ubuntu-18.04-arm64-docker.img" \
+    --disk-image2 "$M5_PATH/disks/debian-arm64.ext4" \
+    --cpu atomic \
+    --num-cores 1 \
+    --mem-size 2GB
+\end{lstlisting}
 \end{frame}
 
 \end{document}
